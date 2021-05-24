@@ -63,12 +63,11 @@ Begin
                 put_line("especialista enviando huella");
             end huella;
         or
-            when (resultado'count > 0) =>
-                accept resultado (res: in randRange; cod: in randRange) do
-                    codigo:= cod;
-                    res_huella:= res;
-                    put_line("especialista recibiendo resultado");
-                end resultado;
+            accept resultado (res: in randRange; cod: in randRange) do
+                codigo:= cod;
+                res_huella:= res;
+                put_line("especialista recibiendo resultado");
+            end resultado;
         end select;
     end loop;
 End Especialista;
