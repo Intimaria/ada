@@ -1,57 +1,66 @@
 with Ada.Text_IO; use Ada.Text_IO;
 with ada.numerics.discrete_random;
 
-procedure huellas is
+Procedure huellas is
 type randRange is range 1..100;
 package Rand_Int is new ada.numerics.discrete_random(randRange);
 use Rand_Int;
 
-task type servidor is 
-    entry huella (test: in out randRange; codigo: out randRange);
-end servidor;
+Task Especialista is
+    entry Huella (valor: out randRange);
+    entry Resultado (res: in randRange; cod: in randRange);
+End Especialista;
 
-type arrS is array (1..8) of servidor;
-arrayS : arrS;
+Task type Servidor is 
+    entry buscar (test: out randRange; codigo: out randRange);
+end Servidor;
 
-task admin;
+ArrS: array (1..8) of Servidor;
 
-task body servidor is 
-    codigo: randRange;
-    test : randRange;
-    valor : randRange;
-    gen : Generator;
-begin 
+Task type Servidor_Admin; 
+
+Task body Servidor is
+    gen: Generator;
+Begin
     reset(gen);
-    loop
-        select 
-            accept huella  (test: in out randRange; codigo: out randRange) do
-                put_line("buscando");
+    accept buscar (test: out randRange; codigo: out randRange) do
+        test:= random(gen);
+        codigo:= random(gen);
+    end buscar;
+End Servidor;
+
+Task body Servidor_Admin is
+    res, valor, test, cod, codigo: randRange;
+Begin
+    Especialista.huella(valor);
+    for i in 1..8 loop
+        ArrS(i).buscar(test, codigo);
+        if (test <  valor) then
+            res:= test;
+            cod:= codigo;
+        end if;
+    end loop;
+    Especialista.resultado(res, cod);
+End Servidor_Admin;
+
+Task body Especialista is
+    res_huella: randRange;
+    codigo: randRange;
+    gen : Generator;
+Begin
+    for i in 1..16 loop
+        select
+            accept Huella (valor: out randRange) do
                 valor := random(gen);
-                if test < valor then
-                    test := valor;
-                end if;
-                put_line("Servidor, encontrada es:" & randRange'Image(valor));
-                codigo := random(gen);
             end huella;
+        or
+            accept resultado (res: in randRange; cod: in randRange) do
+                codigo:= cod;
+                res_huella:= res;
+            end resultado;
         end select;
     end loop;
-end servidor;
-
-task body admin is 
-codigo:randRange;
-test: randRange;
-begin 
-    test:=1;
-    loop
-      for i in 1..8 loop
-               arrayS (i).huella(test, codigo);
-               Put_Line("admin: Task:" & Integer'Image(i) & " codigo"
-           & randRange'Image(codigo) & " test"
-           & randRange'Image(test));
-      end loop;
-    end loop;
-    put_line("huella:" & randRange'Image(test));
-end admin;
-begin
-   null;
-end huellas;
+End Especialista;
+Begin
+    null;
+End huellas;
