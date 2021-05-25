@@ -2,10 +2,11 @@
 with Ada.Text_IO; use Ada.Text_IO;
 with ada.numerics.discrete_random;
 
-Procedure hello is
-type randRange is range 1..100;
+Procedure huella is
+type randRange is range 1..9999;
 package Rand_Int is new ada.numerics.discrete_random(randRange);
 use Rand_Int;
+
 
 Task Especialista is
     entry Huella (valor: out randRange);
@@ -20,55 +21,59 @@ Task body Servidor is
     gen: Generator;
     res, valor, cod : randRange;
 Begin
+    reset(gen);
     loop
         Especialista.huella(valor);
-        put_line("soy un servidor buscando por huella:" & randRange'image(valor));
-        reset(gen);
+        put_line("Servidor, recibo huella" & randRange'image(valor));
         res:= random(gen);
         cod:= random(gen);
-        put_line("servidor: huella encontrada es: " & randRange'Image(res)
-         & " con codigo: " & randRange'Image(cod));
         Especialista.resultado(res, cod);
     end loop;
 End Servidor;
 
 
 Task body Especialista is
-    valor : randRange;
-    codigo: randRange := 1;
+    mihuella,  miresultado : randRange;
+    codigo, micodigo: randRange := 1;
     gen : Generator;
-    i,j: integer :=0;
-    counter : integer;
+    N, whileIndex, counter: integer;
 Begin
-   while j < 3 loop
-        counter := 0;
-        valor := random(gen);
-        put_line("especialista huella:" & randRange'Image(valor));
+   reset(gen);
+   N := 10;
+   whileIndex := 0;
+   while whileIndex < N loop
+        counter := 1;
+        mihuella := random(gen);
+        put_line("Buscar huella:" & randRange'Image(mihuella));
         for i in 1..16 loop
             select
                 when (counter < 9) =>
                     accept Huella (valor: out randRange) do
-                        put_line("especialista enviando huella");
-                    end huella;
+                    put_line("Enviando huella" & 
+                        randRange'image(mihuella) & ", mensaje n." 
+                        & integer'image(counter));
+                        valor:= mihuella;
+                        counter := counter + 1;
+                    end Huella;
             or 
                 accept resultado (res: in randRange; cod: in randRange) do
-                    if (res > valor) then
-                        codigo:= cod;
-                        valor:= res;
-                    end if;
-                    counter := counter + 1;
-                put_line("especialista recibiendo mensaje" & integer'image(counter) & " res: "
-                    & randRange'image(res) & "cod" 
+                    micodigo:=cod;
+                    miresultado:=res;
+                    put_line("Resultado de servidor es: "
+                    & randRange'image(res) & " con cod: " 
                     & randRange'image(cod));
                 end resultado;
             end select;
+            if (miresultado > mihuella) then
+                codigo:= micodigo;
+                mihuella:= miresultado;
+            end if;
         end loop;
-        put_line("especialista tiene huella: " & randRange'Image(valor)
+            put_line("Mejor resultado es: " & randRange'Image(mihuella)
             & " con codigo: " & randRange'Image(codigo));
-        j:= j + 1;
-        put_line("while loop: " & integer'image(j));
+        whileIndex := whileIndex + 1;
     end loop;
 End Especialista;
 Begin
     null;
-End hello;
+End huella;
